@@ -1,4 +1,6 @@
-<!DOCTYPE html>
+import os
+
+HTML_CONTENT = """<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -1215,7 +1217,7 @@
             </div>
 
             <div class="intel-quick-cards-grid">
-              <div class="intel-quick-card" onclick="askLedgerMind('What\'s wrong with this merchant right now?')">
+              <div class="intel-quick-card" onclick="askLedgerMind('What\\'s wrong with this merchant right now?')">
                 <div class="intel-card-q"><span style="color:var(--critical)">●</span> What's wrong with this merchant right now?</div>
                 <div class="intel-card-desc">Instant 30-second operational diagnosis and breakdown.</div>
               </div>
@@ -2209,3 +2211,14 @@
   </script>
 </body>
 </html>
+"""
+
+def main():
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    target = os.path.join(root, "backend", "api", "static", "index.html")
+    with open(target, "w", encoding="utf-8") as f:
+        f.write(HTML_CONTENT)
+    print(f"Generated index.html: {len(HTML_CONTENT)} bytes")
+
+if __name__ == "__main__":
+    main()
