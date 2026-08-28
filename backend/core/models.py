@@ -35,13 +35,17 @@ class ExceptionCategory(str, Enum):
     TIMING_LAG = "TIMING_LAG"
     MDR_GST_VARIANCE = "MDR_GST_VARIANCE"
     PARTIAL_REFUND_NETTED = "PARTIAL_REFUND_NETTED"
+    POST_SETTLEMENT_REFUND_DEFERRED = "POST_SETTLEMENT_REFUND_DEFERRED"
     SPLIT_SETTLEMENT_BATCH = "SPLIT_SETTLEMENT_BATCH"
+    SPLIT_MULTI_UTR_SETTLED = "SPLIT_MULTI_UTR_SETTLED"
     
     # Honest Unresolved categories
     ORPHAN_PAYMENT = "ORPHAN_PAYMENT"
     BANK_UTR_AMOUNT_MISMATCH = "BANK_UTR_AMOUNT_MISMATCH"
     CHARGEBACK_DISPUTE_HOLD = "CHARGEBACK_DISPUTE_HOLD"
     DUPLICATE_AUTH_CAPTURE = "DUPLICATE_AUTH_CAPTURE"
+    AMOUNT_COLLISION_CROSS_ORDER = "AMOUNT_COLLISION_CROSS_ORDER"
+    ACCOUNT_MISMATCH = "ACCOUNT_MISMATCH"
     MISSING_SETTLEMENT_RECORD = "MISSING_SETTLEMENT_RECORD"
     UNKNOWN_DISCREPANCY = "UNKNOWN_DISCREPANCY"
 
@@ -65,7 +69,9 @@ class Payment(BaseModel):
     status: PaymentStatus
     method: str = "card"  # card, upi, netbanking, wallet
     settlement_id: Optional[str] = None
+    settlement_ids: Optional[List[str]] = None  # for split settlements across multi-UTRs
     auth_code: Optional[str] = None
+    account_number: Optional[str] = None
     created_at: str
 
 
@@ -78,6 +84,7 @@ class Settlement(BaseModel):
     net_payout: float
     settlement_date: str
     account_number: str
+    payment_ids: Optional[List[str]] = None
     status: SettlementStatus = SettlementStatus.SETTLED
 
 
@@ -113,6 +120,7 @@ class ExceptionItem(BaseModel):
     order_id: Optional[str] = None
     payment_id: Optional[str] = None
     settlement_id: Optional[str] = None
+    settlement_utr: Optional[str] = None
     expected_amount: float
     actual_amount: float
     discrepancy_amount: float
@@ -129,23 +137,26 @@ class MatchedRecord(BaseModel):
     order_id: str
     payment_id: str
     settlement_id: Optional[str] = None
+    settlement_utrs: List[str] = Field(default_factory=list)
     gross_amount: float
     fee: float
     tax: float
     net_settled: float
-    match_type: str = "3_WAY_EXACT"  # 3_WAY_EXACT, 2_WAY_SETTLED, AI_RESOLVED_TIMING, etc.
+    match_type: str = "3_WAY_EXACT"  # 3_WAY_EXACT, 3_WAY_SPLIT_UTR, AI_RESOLVED_TIMING, etc.
     matched_at: str
 
 
 class ReconciliationMetrics(BaseModel):
     total_records_ingested: int
-    matched_count: int
-    deterministic_matches: int
-    ai_investigated_count: int
-    ai_resolved_count: int
+    true_reconciliations: int
+    false_reconciliations: int = 0
+    exceptions_detected: int
+    exceptions_correctly_diagnosed: int
     honest_unresolved_count: int
-    match_rate_pct: float
-    match_accuracy_pct: float
+    reconciliation_accuracy_pct: float
+    exception_recall_pct: float
+    exception_precision_pct: float
+    ai_resolution_rate_pct: float
     throughput_records_per_sec: float
     processing_time_ms: float
     total_gmv: float
@@ -153,6 +164,31 @@ class ReconciliationMetrics(BaseModel):
     total_fees_verified: float
     total_tax_verified: float
     unreconciled_discrepancy_amount: float
+
+    # Aliases for backward compatibility in UI HUD
+    @property
+    def matched_count(self) -> int:
+        return self.true_reconciliations
+
+    @property
+    def deterministic_matches(self) -> int:
+        return self.true_reconciliations
+
+    @property
+    def ai_investigated_count(self) -> int:
+        return self.exceptions_detected
+
+    @property
+    def ai_resolved_count(self) -> int:
+        return self.exceptions_correctly_diagnosed
+
+    @property
+    def match_rate_pct(self) -> float:
+        return round((self.true_reconciliations / self.total_records_ingested * 100.0), 2) if self.total_records_ingested > 0 else 0.0
+
+    @property
+    def match_accuracy_pct(self) -> float:
+        return self.reconciliation_accuracy_pct
 
 
 class ReconciliationResult(BaseModel):
@@ -188,3 +224,54 @@ class SettlementQAResponse(BaseModel):
     breakdown_table: Dict[str, Any] = Field(default_factory=dict)
     suggested_action: str
     confidence: float
+
+
+class FinancialLineageNode(BaseModel):
+    node_type: str  # "ORDER", "PAYMENT", "SETTLEMENT", "REFUNDS"
+    entity_id: str
+    status: str
+    amount: float
+    formatted_amount: str
+    meta: str
+    verified: bool
+    source: str
+    timestamp: Optional[str] = None
+
+
+class FinancialStatement(BaseModel):
+    gross_amount: float
+    gateway_fee: float
+    gst_tax: float
+    refund_deductions: float
+    expected_net: float
+    actual_net: float
+    residual_variance: float
+    variance_pct: float
+    formula_description: str
+
+
+class EvidenceChecklistItem(BaseModel):
+    name: str
+    status: str  # "VERIFIED", "MISSING", "NOT_APPLICABLE"
+    detail: str
+    icon: str  # "✓", "○", "⚠"
+
+
+class InvestigationContext(BaseModel):
+    exception_id: str
+    target_record: str
+    payment_id: str
+    order_id: Optional[str] = None
+    settlement_id: Optional[str] = None
+    category: str
+    severity: str  # "CRITICAL", "HIGH", "MEDIUM", "LOW"
+    title: str
+    subheading: str
+    variance_summary: str
+    variance_explanation: str
+    financials: FinancialStatement
+    lineage: List[FinancialLineageNode]
+    evidence_checklist: List[EvidenceChecklistItem]
+    agent_trace: Dict[str, Any]
+    decision: Dict[str, Any]
+
