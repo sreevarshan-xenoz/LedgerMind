@@ -1094,7 +1094,7 @@ HTML_CODE = """<!DOCTYPE html>
 
   <!-- APP HEADER -->
   <header class="app-header">
-    <div class="brand" onclick="switchNav('ask-ledgermind', document.querySelector('.nav-item.intel'))">
+    <div class="brand" onclick="switchNav('overview', document.querySelectorAll('.nav-item')[1])">
       <div class="brand-mark">◇</div>
       <div class="brand-title-group">
         <span class="brand-text">LedgerMind</span>
@@ -1103,10 +1103,10 @@ HTML_CODE = """<!DOCTYPE html>
     </div>
 
     <!-- UNIVERSAL COPILOT SEARCH TRIGGER -->
-    <div class="ask-ledgermind-trigger-bar" onclick="openAskLedgerMindStage()" title="Ask LedgerMind anything about the money (Ctrl+K / Cmd+K)">
+    <div class="ask-ledgermind-trigger-bar" onclick="openAskLedgerMindStage()" title="Ask anything about the money (Ctrl+K / Cmd+K)">
       <div class="ask-trigger-left">
         <span class="ask-sparkle">✦</span>
-        <span id="top-search-placeholder">Ask LedgerMind anything about the money…</span>
+        <span id="top-search-placeholder">Ask anything about the money…</span>
       </div>
       <span class="ask-kbd-pill">⌘K</span>
     </div>
@@ -1146,7 +1146,7 @@ HTML_CODE = """<!DOCTYPE html>
     <div class="breadcrumb-box">
       <span class="breadcrumb-item" id="bc-mode">OPERATE</span>
       <span class="breadcrumb-sep">/</span>
-      <span class="breadcrumb-item active" id="bc-view">Ask LedgerMind</span>
+      <span class="breadcrumb-item active" id="bc-view">Copilot</span>
     </div>
     <button class="explain-screen-btn" onclick="explainCurrentScreen()" title="Ask Copilot to explain what is shown on this screen">
       <span>✦ Explain this screen</span>
