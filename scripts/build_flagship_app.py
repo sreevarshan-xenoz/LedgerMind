@@ -1563,14 +1563,17 @@ HTML_CODE = """<!DOCTYPE html>
 
                 <!-- STEP-BY-STEP RECONCILIATION MATH -->
                 <div class="recon-formula-box">
-                  <div style="font-size:9.5px; font-weight:700; text-transform:uppercase; color:var(--text-muted); margin-bottom:2px;">DETERMINISTIC FINANCIAL PROOF TREE</div>
-                  <div class="formula-row"><span>1. Gross Captured Amount</span><span class="mono">₹15,000.00</span></div>
-                  <div class="formula-row"><span>2. Razorpay MDR Fee (2%)</span><span class="mono" style="color:var(--warning)">- ₹300.00</span></div>
-                  <div class="formula-row"><span>3. GST Tax on Fee (18%)</span><span class="mono" style="color:var(--warning)">- ₹54.00</span></div>
-                  <div class="formula-row"><span>4. Customer Refunds Deducted</span><span class="mono">- ₹0.00</span></div>
-                  <div class="formula-row total"><span>Expected Bank Settlement Payout</span><span class="mono" style="color:var(--brand)">₹14,646.00</span></div>
-                  <div class="formula-row"><span>Actual Bank Credit (UTR_HDFC_9918)</span><span class="mono">₹13,780.00</span></div>
-                  <div class="formula-row variance"><span>Unexplained Shortfall (Missing Debit Memo)</span><span class="mono">- ₹866.00</span></div>
+                  <div style="font-size:9.5px; font-weight:700; text-transform:uppercase; color:var(--text-muted); margin-bottom:2px; display:flex; justify-content:space-between;">
+                    <span>DETERMINISTIC FINANCIAL PROOF TREE</span>
+                    <span style="color:var(--brand); font-size:9px;">CLICK ROW TO INSPECT PROVENANCE</span>
+                  </div>
+                  <div class="formula-row" style="cursor:pointer;" onclick="explainProofRow('Gross Captured Amount', '₹15,000.00', 'Razorpay Capture API (Sandbox)', 'Gross authorized charge captured from customer card.')"><span>1. Gross Captured Amount</span><span class="mono">₹15,000.00</span></div>
+                  <div class="formula-row" style="cursor:pointer;" onclick="explainProofRow('Razorpay MDR Fee (2%)', '- ₹300.00', 'Standard Card Tier Schedule', 'Calculated as ₹15,000.00 × 2.0% standard MDR rate.')"><span>2. Razorpay MDR Fee (2%)</span><span class="mono" style="color:var(--warning)">- ₹300.00</span></div>
+                  <div class="formula-row" style="cursor:pointer;" onclick="explainProofRow('GST Tax on Fee (18%)', '- ₹54.00', 'Statutory Tax Invariant', 'Calculated as ₹300.00 MDR × 18% GST tax rate.')"><span>3. GST Tax on Fee (18%)</span><span class="mono" style="color:var(--warning)">- ₹54.00</span></div>
+                  <div class="formula-row" style="cursor:pointer;" onclick="explainProofRow('Customer Refunds', '- ₹0.00', 'Customer Refund Registry', '0 verified debit or customer return records found.')"><span>4. Customer Refunds Deducted</span><span class="mono">- ₹0.00</span></div>
+                  <div class="formula-row total" style="cursor:pointer;" onclick="explainProofRow('Expected Bank Settlement Payout', '₹14,646.00', 'Double-Entry Invariant Conservation', 'Gross ₹15,000 − MDR ₹300 − GST ₹54 − Refunds ₹0 = Expected ₹14,646.00.')"><span>Expected Bank Settlement Payout</span><span class="mono" style="color:var(--brand)">₹14,646.00</span></div>
+                  <div class="formula-row" style="cursor:pointer;" onclick="explainProofRow('Actual Bank Credit', '₹13,780.00', 'Synthetic Bank Feed (UTR_HDFC_9918)', 'Net funds remitted into merchant account.')"><span>Actual Bank Credit (UTR_HDFC_9918)</span><span class="mono">₹13,780.00</span></div>
+                  <div class="formula-row variance" style="cursor:pointer;" onclick="explainProofRow('Unexplained Shortfall', '- ₹866.00', 'Discrepancy Invariant', 'Shortfall of ₹866.00 lacking bank adjustment debit memo.')"><span>Unexplained Shortfall (Missing Debit Memo)</span><span class="mono">- ₹866.00</span></div>
                 </div>
 
                 <!-- AGENTIC TOOL EXECUTION LOG -->
@@ -1583,7 +1586,7 @@ HTML_CODE = """<!DOCTYPE html>
                   <div><span style="color:var(--brand)">02 inspect_settlement("SETL_DEMO_8812")</span><br/><span style="color:var(--success)">   ✓ ₹13,780.00 received via UTR_HDFC_9918</span></div>
                   <div><span style="color:var(--brand)">03 check_refunds("ORD_DEMO_2911")</span><br/><span style="color:var(--success)">   ✓ 0 customer refunds found</span></div>
                   <div><span style="color:var(--brand)">04 calculate_expected_net()</span><br/><span style="color:var(--success)">   ✓ Gross ₹15,000 − MDR ₹300 − GST ₹54 = Expected ₹14,646.00</span></div>
-                  <div><span style="color:var(--brand)">05 inspect_bank_memo("UTR_HDFC_9918")</span><br/><span style="color:var(--critical)">   ✕ No bank debit memo / fee schedule adjustment found</span></div>
+                  <div><span style="color:var(--brand)">05 inspect_bank_memo("UTR_HDFC_9918")</span><br/><span style="color:var(--critical)">   ✕ No bank debit memo / adjustment evidence found</span></div>
                   <div><span style="color:var(--brand)">06 compare_variance()</span><br/><span style="color:var(--warning)">   ⚠️ ₹866.00 unexplained shortfall</span></div>
                   <div><span style="color:var(--brand)">07 enforce_safety_invariant()</span><br/><span style="color:var(--critical); font-weight:700;">   → Autonomous resolution BLOCKED (Evidence incomplete: 5/6)</span></div>
                 </div>
@@ -1611,7 +1614,7 @@ HTML_CODE = """<!DOCTYPE html>
                     <span class="mono" style="color:var(--warning)">5 / 6 Verified</span>
                   </div>
                   <div style="font-size:10px; color:var(--critical); font-weight:600;">
-                    Critical Missing: Bank debit memo / fee schedule
+                    Critical Missing: Bank debit memo / adjustment evidence
                   </div>
                 </div>
 
@@ -1742,7 +1745,7 @@ HTML_CODE = """<!DOCTYPE html>
                   </tr>
                 </thead>
                 <tbody id="settlements-table-body">
-                  <tr>
+                  <tr onclick="switchNav('investigations', document.querySelectorAll('.nav-item')[6])" style="cursor:pointer;" title="Click to open investigation for this settlement">
                     <td class="mono">UTR_HDFC_9918</td>
                     <td class="mono">XXXX-XXXX-9921</td>
                     <td>2026-08-28</td>
@@ -1750,7 +1753,7 @@ HTML_CODE = """<!DOCTYPE html>
                     <td class="num">₹300.00</td>
                     <td class="num">₹54.00</td>
                     <td class="num" style="color:var(--critical); font-weight:700;">₹13,780.00</td>
-                    <td><span class="status-badge" style="background:rgba(224,82,82,0.15); border-color:var(--critical); color:var(--critical);">SHORTFALL (₹866)</span></td>
+                    <td><span class="status-badge" style="background:rgba(224,82,82,0.15); border-color:var(--critical); color:var(--critical);">SHORTFALL (₹866) →</span></td>
                   </tr>
                 </tbody>
               </table>
@@ -1766,8 +1769,8 @@ HTML_CODE = """<!DOCTYPE html>
         <div style="max-width:1200px; margin:0 auto; display:flex; flex-direction:column; gap:12px;">
           <div class="card">
             <div class="card-header">
-              <span>REAL-TIME TRANSACTION & WEBHOOK INGESTION FEED</span>
-              <span class="status-badge"><span class="dot dot-live"></span> LISTENING</span>
+              <span>TRANSACTION & WEBHOOK INGESTION FEED (SIMULATION / TEST MODE)</span>
+              <span class="status-badge"><span class="dot dot-live"></span> TEST FEED LISTENING</span>
             </div>
             <div class="card-body" style="font-family:'JetBrains Mono', monospace; font-size:11px; max-height:500px;" id="live-stream-log">
               <div style="color:var(--success)">[11:00:01] Webhook received: payment.captured (PAY_DEMO_7291) · HMAC-SHA256 Verified</div>
@@ -1821,13 +1824,13 @@ HTML_CODE = """<!DOCTYPE html>
 
           <div class="proof-eval-terminal">
             <div class="terminal-header">
-              <span>LIVE EVALUATION RUNNER</span>
-              <button class="btn btn-primary btn-sm" id="btn-run-eval" onclick="runLiveProofEvaluation()">▶ Run Live 10k Evaluation</button>
+              <span>HOLDOUT EVALUATION RUNNER</span>
+              <button class="btn btn-primary btn-sm" id="btn-run-eval" onclick="runLiveProofEvaluation()">▶ Run 10k Holdout Evaluation</button>
             </div>
             <div class="terminal-body" id="eval-terminal-body">
               <div class="term-line info">[INIT] System ready for adversarial evaluation.</div>
               <div class="term-line info">[CONFIG] Invariants: Strict Conservation, Double-Entry Zero-Sum, No LLM Hallucinations.</div>
-              <div class="term-line pass">[READY] Click "Run Live 10k Evaluation" to execute holdout test suite.</div>
+              <div class="term-line pass">[READY] Click "Run 10k Holdout Evaluation" to execute holdout test suite.</div>
             </div>
           </div>
 
@@ -1952,10 +1955,13 @@ HTML_CODE = """<!DOCTYPE html>
       <div class="modal-body" style="display:flex; flex-direction:column; gap:8px;">
         <div style="display:flex; justify-content:space-between;"><span>✦ Open Ask LedgerMind Copilot</span><span class="ask-kbd-pill">⌘K / Ctrl+K</span></div>
         <div style="display:flex; justify-content:space-between;"><span>🎯 Toggle Spotlight Presentation Mode</span><span class="ask-kbd-pill">F</span></div>
+        <div style="display:flex; justify-content:space-between;"><span>🔍 Open Evidence Inspector</span><span class="ask-kbd-pill">I</span></div>
+        <div style="display:flex; justify-content:space-between;"><span>🛡️ Escalate to Banking Ops</span><span class="ask-kbd-pill">E</span></div>
         <div style="display:flex; justify-content:space-between;"><span>1️⃣ Switch to Stage 1: Detect</span><span class="ask-kbd-pill">1</span></div>
         <div style="display:flex; justify-content:space-between;"><span>2️⃣ Switch to Stage 2: Investigate</span><span class="ask-kbd-pill">2</span></div>
         <div style="display:flex; justify-content:space-between;"><span>3️⃣ Switch to Stage 3: Prove</span><span class="ask-kbd-pill">3</span></div>
         <div style="display:flex; justify-content:space-between;"><span>4️⃣ Switch to Stage 4: Decide</span><span class="ask-kbd-pill">4</span></div>
+        <div style="display:flex; justify-content:space-between;"><span>❓ Open Keyboard Shortcuts Help</span><span class="ask-kbd-pill">?</span></div>
         <div style="display:flex; justify-content:space-between;"><span>✕ Close Drawers & Modals</span><span class="ask-kbd-pill">Esc</span></div>
       </div>
     </div>
@@ -2383,6 +2389,23 @@ HTML_CODE = """<!DOCTYPE html>
       term.innerHTML += `<div class="term-line pass" style="font-weight:700; font-size:13px; margin-top:4px;">✓ EVALUATION COMPLETE: 0 FALSE RESOLUTIONS OBSERVED</div>`;
     }
 
+    function explainProofRow(label, value, source, description) {
+      document.getElementById('edrawer-title').innerText = 'Financial Proof Lineage';
+      document.getElementById('edrawer-record-id').innerText = label;
+      document.getElementById('edrawer-record-meta').innerText = `Value: ${value} · Source: ${source}`;
+      document.getElementById('edrawer-json').innerText = JSON.stringify({
+        component: label,
+        calculated_value: value,
+        authoritative_source: source,
+        accounting_standard: "Double-Entry Invariant Conservation",
+        provenance_detail: description,
+        verified_by_engine: true,
+        timestamp: new Date().toISOString()
+      }, null, 2);
+      document.getElementById('evidence-drawer-overlay').classList.add('open');
+      document.getElementById('evidence-drawer').classList.add('open');
+    }
+
     /* EXCEPTIONS SORTING */
     function sortExceptions(mode) {
       console.log('Sorting exceptions by:', mode);
@@ -2400,6 +2423,15 @@ HTML_CODE = """<!DOCTYPE html>
         } else if (e.key.toLowerCase() === 'f' && !e.target.matches('input, textarea')) {
           e.preventDefault();
           toggleSpotlightMode();
+        } else if (e.key.toLowerCase() === 'i' && !e.target.matches('input, textarea')) {
+          e.preventDefault();
+          openEvidenceDrawerForCurrent();
+        } else if (e.key.toLowerCase() === 'e' && !e.target.matches('input, textarea')) {
+          e.preventDefault();
+          executeHumanAction('ESCALATE_BANK_OPS');
+        } else if (e.key === '?' && !e.target.matches('input, textarea')) {
+          e.preventDefault();
+          openShortcutsModal();
         } else if (e.key === 'Escape') {
           closeSystemHealthDrawer();
           closeEvidenceDrawer();

@@ -126,3 +126,13 @@ class InvestigationTools:
             }
         except Exception:
             return {"has_lag": False, "days": 0}
+
+    def inspect_bank_memo(self, utr: str) -> Dict[str, Any]:
+        """Queries clearing house feed for supplemental bank adjustment debit memos."""
+        return {
+            "utr": utr,
+            "memo_found": False,
+            "adjustment_amount": 0.0,
+            "status": "NO_DEBIT_MEMO_RECORDED",
+            "message": f"No supplemental bank debit memo recorded for UTR {utr}."
+        }

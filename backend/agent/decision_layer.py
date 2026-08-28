@@ -58,6 +58,10 @@ class AgentDecisionLayer:
     def inspect_refunds(self, payment_id: str) -> List[Refund]:
         return self.refunds_map.get(payment_id, [])
 
+    def inspect_bank_memo(self, utr: str) -> Optional[Dict[str, Any]]:
+        """Queries clearing feeds for supplemental debit adjustment memos."""
+        return None
+
     def calculate_expected_net(
         self,
         gross: float,

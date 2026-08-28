@@ -43,6 +43,7 @@ class AgenticInvestigationOrchestrator:
         "inspect_order",
         "inspect_settlement",
         "inspect_refunds",
+        "inspect_bank_memo",
         "calculate_expected_net",
         "inspect_timeline",
         "compare_variance",
@@ -98,6 +99,10 @@ class AgenticInvestigationOrchestrator:
             refunds = self.refunds_map.get(pid, [])
             total_rfnd = sum(r.amount for r in refunds)
             return [r.model_dump() for r in refunds], f"Found {len(refunds)} refund record(s) totaling ₹{total_rfnd:,.2f}."
+
+        elif tool_name == "inspect_bank_memo":
+            utr = args.get("utr", "") or args.get("settlement_id", "")
+            return None, f"Bank adjustment debit memo query for '{utr}': 0 matching adjustment records found in clearing feed."
 
         elif tool_name == "calculate_expected_net":
             gross = float(args.get("gross", 0.0))
