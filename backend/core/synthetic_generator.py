@@ -18,8 +18,9 @@ class SyntheticFinancialGenerator:
     Bank Settlements, Refunds) with injected realistic edge cases and ground truth metadata.
     """
 
-    def __init__(self, seed: int = 42):
+    def __init__(self, seed: int = 42, primary_merchant_account: str = "XXXX-XXXX-9921"):
         random.seed(seed)
+        self.primary_merchant_account = primary_merchant_account
         self.payment_methods = ["upi", "card", "netbanking", "wallet"]
         self.method_weights = [0.55, 0.30, 0.10, 0.05]
         self.fee_rates = {
@@ -53,8 +54,8 @@ class SyntheticFinancialGenerator:
         refunds: List[Refund] = []
         ground_truth: Dict[str, GroundTruthMetadata] = {}
 
-        # Tracking for batch settlements (multi-transaction UTRs)
         settlement_batches: Dict[str, List[Tuple[float, float, float, str]]] = {}
+        settlement_accounts: Dict[str, str] = {}
 
         for i in range(num_records):
             rec_num = i + 1
@@ -65,7 +66,6 @@ class SyntheticFinancialGenerator:
             txn_time = start_date + timedelta(minutes=random.randint(5, 7200))
             txn_time_str = txn_time.isoformat()
 
-            # Realistic transaction amount distributions in INR (from small ₹199 to large ₹45,000)
             amount_type = random.choices(["small", "medium", "large"], weights=[0.60, 0.35, 0.05])[0]
             if amount_type == "small":
                 amount = float(random.choice([199, 299, 499, 799, 999, 1499]))
@@ -80,7 +80,6 @@ class SyntheticFinancialGenerator:
             is_anomaly = random.random() < anomaly_rate
 
             if not is_anomaly:
-                # Standard clean 3-way match
                 settlement_id = f"setl_d_{txn_time.strftime('%Y%m%d')}_{random.randint(10, 99)}"
                 orders.append(Order(
                     order_id=order_id,
@@ -101,12 +100,14 @@ class SyntheticFinancialGenerator:
                     method=method,
                     settlement_id=settlement_id,
                     auth_code=f"AUTH_{random.randint(100000, 999999)}",
+                    account_number=self.primary_merchant_account,
                     created_at=txn_time_str
                 ))
                 
                 if settlement_id not in settlement_batches:
                     settlement_batches[settlement_id] = []
-                settlement_batches[settlement_id].append((amount, fee, tax, txn_time_str))
+                    settlement_accounts[settlement_id] = self.primary_merchant_account
+                settlement_batches[settlement_id].append((amount, fee, tax, (txn_time + timedelta(days=1)).isoformat()))
 
                 ground_truth[payment_id] = GroundTruthMetadata(
                     is_anomaly=False,
@@ -116,7 +117,6 @@ class SyntheticFinancialGenerator:
                 )
 
             else:
-                # Anomaly injection with clear category definitions
                 anomaly_type = random.choice([
                     ExceptionCategory.TIMING_LAG,
                     ExceptionCategory.MDR_GST_VARIANCE,
@@ -130,13 +130,11 @@ class SyntheticFinancialGenerator:
                 ])
 
                 if anomaly_type == ExceptionCategory.TIMING_LAG:
-                    # Settled T+3 due to bank holiday cutoff; explainable timing
-                    settlement_id = f"setl_d_{(txn_time + timedelta(days=3)).strftime('%Y%m%d')}_{random.randint(10, 99)}"
+                    settlement_id = f"setl_timing_{rec_num}_{uuid.uuid4().hex[:4]}"
                     orders.append(Order(order_id=order_id, amount=amount, status=OrderStatus.PAID, customer_id=customer_id, created_at=txn_time_str))
-                    payments.append(Payment(payment_id=payment_id, order_id=order_id, amount=amount, fee=fee, tax=tax, net_amount=net, status=PaymentStatus.CAPTURED, method=method, settlement_id=settlement_id, created_at=txn_time_str))
-                    if settlement_id not in settlement_batches:
-                        settlement_batches[settlement_id] = []
-                    settlement_batches[settlement_id].append((amount, fee, tax, (txn_time + timedelta(days=3)).isoformat()))
+                    payments.append(Payment(payment_id=payment_id, order_id=order_id, amount=amount, fee=fee, tax=tax, net_amount=net, status=PaymentStatus.CAPTURED, method=method, settlement_id=settlement_id, account_number=self.primary_merchant_account, created_at=txn_time_str))
+                    settlement_batches[settlement_id] = [(amount, fee, tax, (txn_time + timedelta(days=3)).isoformat())]
+                    settlement_accounts[settlement_id] = self.primary_merchant_account
 
                     ground_truth[payment_id] = GroundTruthMetadata(
                         is_anomaly=True,
@@ -147,14 +145,12 @@ class SyntheticFinancialGenerator:
                     )
 
                 elif anomaly_type == ExceptionCategory.MDR_GST_VARIANCE:
-                    # International card surcharge (e.g., 3.0% instead of standard 2.0%)
                     custom_fee, custom_tax, custom_net = self.calculate_fee_and_tax(amount, method, custom_fee_rate=0.03)
-                    settlement_id = f"setl_d_{txn_time.strftime('%Y%m%d')}_{random.randint(10, 99)}"
+                    settlement_id = f"setl_mdr_{rec_num}_{uuid.uuid4().hex[:4]}"
                     orders.append(Order(order_id=order_id, amount=amount, status=OrderStatus.PAID, customer_id=customer_id, created_at=txn_time_str))
-                    payments.append(Payment(payment_id=payment_id, order_id=order_id, amount=amount, fee=custom_fee, tax=custom_tax, net_amount=custom_net, status=PaymentStatus.CAPTURED, method=method, settlement_id=settlement_id, created_at=txn_time_str))
-                    if settlement_id not in settlement_batches:
-                        settlement_batches[settlement_id] = []
-                    settlement_batches[settlement_id].append((amount, custom_fee, custom_tax, txn_time_str))
+                    payments.append(Payment(payment_id=payment_id, order_id=order_id, amount=amount, fee=custom_fee, tax=custom_tax, net_amount=custom_net, status=PaymentStatus.CAPTURED, method=method, settlement_id=settlement_id, account_number=self.primary_merchant_account, created_at=txn_time_str))
+                    settlement_batches[settlement_id] = [(amount, custom_fee, custom_tax, (txn_time + timedelta(days=1)).isoformat())]
+                    settlement_accounts[settlement_id] = self.primary_merchant_account
 
                     diff = round(custom_fee + custom_tax - (fee + tax), 2)
                     ground_truth[payment_id] = GroundTruthMetadata(
@@ -166,11 +162,10 @@ class SyntheticFinancialGenerator:
                     )
 
                 elif anomaly_type == ExceptionCategory.PARTIAL_REFUND_NETTED:
-                    # A refund occurred, deducting amount from net payout
                     refund_amount = round(amount * random.choice([0.25, 0.50, 1.0]), 2)
-                    settlement_id = f"setl_d_{txn_time.strftime('%Y%m%d')}_{random.randint(10, 99)}"
+                    settlement_id = f"setl_rfnd_{rec_num}_{uuid.uuid4().hex[:4]}"
                     orders.append(Order(order_id=order_id, amount=amount, status=OrderStatus.REFUNDED if refund_amount == amount else OrderStatus.PAID, customer_id=customer_id, created_at=txn_time_str))
-                    payments.append(Payment(payment_id=payment_id, order_id=order_id, amount=amount, fee=fee, tax=tax, net_amount=net, status=PaymentStatus.REFUNDED if refund_amount == amount else PaymentStatus.CAPTURED, method=method, settlement_id=settlement_id, created_at=txn_time_str))
+                    payments.append(Payment(payment_id=payment_id, order_id=order_id, amount=amount, fee=fee, tax=tax, net_amount=net, status=PaymentStatus.REFUNDED if refund_amount == amount else PaymentStatus.CAPTURED, method=method, settlement_id=settlement_id, account_number=self.primary_merchant_account, created_at=txn_time_str))
                     refund_id = f"rfnd_{rec_num:05d}_{uuid.uuid4().hex[:6]}"
                     refunds.append(Refund(
                         refund_id=refund_id,
@@ -180,10 +175,8 @@ class SyntheticFinancialGenerator:
                         status=RefundStatus.PROCESSED,
                         created_at=(txn_time + timedelta(hours=2)).isoformat()
                     ))
-                    if settlement_id not in settlement_batches:
-                        settlement_batches[settlement_id] = []
-                    # Settle net minus refund
-                    settlement_batches[settlement_id].append((amount - refund_amount, fee, tax, txn_time_str))
+                    settlement_batches[settlement_id] = [(amount - refund_amount, fee, tax, (txn_time + timedelta(days=1)).isoformat())]
+                    settlement_accounts[settlement_id] = self.primary_merchant_account
 
                     ground_truth[payment_id] = GroundTruthMetadata(
                         is_anomaly=True,
@@ -194,13 +187,13 @@ class SyntheticFinancialGenerator:
                     )
 
                 elif anomaly_type == ExceptionCategory.SPLIT_SETTLEMENT_BATCH:
-                    # Grouped under shared multi-payment settlement UTR
                     settlement_id = f"setl_shared_batch_{random.randint(1, 5)}"
                     orders.append(Order(order_id=order_id, amount=amount, status=OrderStatus.PAID, customer_id=customer_id, created_at=txn_time_str))
-                    payments.append(Payment(payment_id=payment_id, order_id=order_id, amount=amount, fee=fee, tax=tax, net_amount=net, status=PaymentStatus.CAPTURED, method=method, settlement_id=settlement_id, created_at=txn_time_str))
+                    payments.append(Payment(payment_id=payment_id, order_id=order_id, amount=amount, fee=fee, tax=tax, net_amount=net, status=PaymentStatus.CAPTURED, method=method, settlement_id=settlement_id, account_number=self.primary_merchant_account, created_at=txn_time_str))
                     if settlement_id not in settlement_batches:
                         settlement_batches[settlement_id] = []
-                    settlement_batches[settlement_id].append((amount, fee, tax, txn_time_str))
+                        settlement_accounts[settlement_id] = self.primary_merchant_account
+                    settlement_batches[settlement_id].append((amount, fee, tax, (txn_time + timedelta(days=1)).isoformat()))
 
                     ground_truth[payment_id] = GroundTruthMetadata(
                         is_anomaly=True,
@@ -211,12 +204,10 @@ class SyntheticFinancialGenerator:
                     )
 
                 elif anomaly_type == ExceptionCategory.ORPHAN_PAYMENT:
-                    # Payment exists in Razorpay but has no corresponding Order in ERP (Unresolved)
-                    settlement_id = f"setl_d_{txn_time.strftime('%Y%m%d')}_{random.randint(10, 99)}"
-                    payments.append(Payment(payment_id=payment_id, order_id=None, amount=amount, fee=fee, tax=tax, net_amount=net, status=PaymentStatus.CAPTURED, method=method, settlement_id=settlement_id, created_at=txn_time_str))
-                    if settlement_id not in settlement_batches:
-                        settlement_batches[settlement_id] = []
-                    settlement_batches[settlement_id].append((amount, fee, tax, txn_time_str))
+                    settlement_id = f"setl_orphan_{rec_num}_{uuid.uuid4().hex[:4]}"
+                    payments.append(Payment(payment_id=payment_id, order_id=None, amount=amount, fee=fee, tax=tax, net_amount=net, status=PaymentStatus.CAPTURED, method=method, settlement_id=settlement_id, account_number=self.primary_merchant_account, created_at=txn_time_str))
+                    settlement_batches[settlement_id] = [(amount, fee, tax, (txn_time + timedelta(days=1)).isoformat())]
+                    settlement_accounts[settlement_id] = self.primary_merchant_account
 
                     ground_truth[payment_id] = GroundTruthMetadata(
                         is_anomaly=True,
@@ -227,15 +218,12 @@ class SyntheticFinancialGenerator:
                     )
 
                 elif anomaly_type == ExceptionCategory.BANK_UTR_AMOUNT_MISMATCH:
-                    # Bank credited less than expected (Unresolved honest exception)
                     variance = float(random.choice([250, 450, 770, 1200]))
-                    settlement_id = f"setl_d_{txn_time.strftime('%Y%m%d')}_{random.randint(10, 99)}"
+                    settlement_id = f"setl_shortfall_{rec_num}_{uuid.uuid4().hex[:4]}"
                     orders.append(Order(order_id=order_id, amount=amount, status=OrderStatus.PAID, customer_id=customer_id, created_at=txn_time_str))
-                    payments.append(Payment(payment_id=payment_id, order_id=order_id, amount=amount, fee=fee, tax=tax, net_amount=net, status=PaymentStatus.CAPTURED, method=method, settlement_id=settlement_id, created_at=txn_time_str))
-                    if settlement_id not in settlement_batches:
-                        settlement_batches[settlement_id] = []
-                    # Injected unexplained bank deduction
-                    settlement_batches[settlement_id].append((amount - variance, fee, tax, txn_time_str))
+                    payments.append(Payment(payment_id=payment_id, order_id=order_id, amount=amount, fee=fee, tax=tax, net_amount=net, status=PaymentStatus.CAPTURED, method=method, settlement_id=settlement_id, account_number=self.primary_merchant_account, created_at=txn_time_str))
+                    settlement_batches[settlement_id] = [(amount - variance, fee, tax, (txn_time + timedelta(days=1)).isoformat())]
+                    settlement_accounts[settlement_id] = self.primary_merchant_account
 
                     ground_truth[payment_id] = GroundTruthMetadata(
                         is_anomaly=True,
@@ -246,9 +234,8 @@ class SyntheticFinancialGenerator:
                     )
 
                 elif anomaly_type == ExceptionCategory.CHARGEBACK_DISPUTE_HOLD:
-                    # Dispute open, settlement withheld (Unresolved)
                     orders.append(Order(order_id=order_id, amount=amount, status=OrderStatus.PAID, customer_id=customer_id, created_at=txn_time_str))
-                    payments.append(Payment(payment_id=payment_id, order_id=order_id, amount=amount, fee=fee, tax=tax, net_amount=net, status=PaymentStatus.CAPTURED, method=method, settlement_id=None, created_at=txn_time_str))
+                    payments.append(Payment(payment_id=payment_id, order_id=order_id, amount=amount, fee=fee, tax=tax, net_amount=net, status=PaymentStatus.CAPTURED, method=method, settlement_id=None, account_number=self.primary_merchant_account, created_at=txn_time_str))
 
                     ground_truth[payment_id] = GroundTruthMetadata(
                         is_anomaly=True,
@@ -259,11 +246,10 @@ class SyntheticFinancialGenerator:
                     )
 
                 elif anomaly_type == ExceptionCategory.DUPLICATE_AUTH_CAPTURE:
-                    # Duplicate capture on single order (Unresolved)
                     dup_pay_id = f"pay_{rec_num:05d}_dup_{uuid.uuid4().hex[:4]}"
                     orders.append(Order(order_id=order_id, amount=amount, status=OrderStatus.PAID, customer_id=customer_id, created_at=txn_time_str))
-                    payments.append(Payment(payment_id=payment_id, order_id=order_id, amount=amount, fee=fee, tax=tax, net_amount=net, status=PaymentStatus.CAPTURED, method=method, settlement_id=None, created_at=txn_time_str))
-                    payments.append(Payment(payment_id=dup_pay_id, order_id=order_id, amount=amount, fee=fee, tax=tax, net_amount=net, status=PaymentStatus.CAPTURED, method=method, settlement_id=None, created_at=txn_time_str))
+                    payments.append(Payment(payment_id=payment_id, order_id=order_id, amount=amount, fee=fee, tax=tax, net_amount=net, status=PaymentStatus.CAPTURED, method=method, settlement_id=None, account_number=self.primary_merchant_account, created_at=txn_time_str))
+                    payments.append(Payment(payment_id=dup_pay_id, order_id=order_id, amount=amount, fee=fee, tax=tax, net_amount=net, status=PaymentStatus.CAPTURED, method=method, settlement_id=None, account_number=self.primary_merchant_account, created_at=txn_time_str))
 
                     ground_truth[payment_id] = GroundTruthMetadata(
                         is_anomaly=True,
@@ -274,9 +260,8 @@ class SyntheticFinancialGenerator:
                     )
 
                 elif anomaly_type == ExceptionCategory.MISSING_SETTLEMENT_RECORD:
-                    # Payment captured, but settlement record missing from bank feed (Unresolved)
                     orders.append(Order(order_id=order_id, amount=amount, status=OrderStatus.PAID, customer_id=customer_id, created_at=txn_time_str))
-                    payments.append(Payment(payment_id=payment_id, order_id=order_id, amount=amount, fee=fee, tax=tax, net_amount=net, status=PaymentStatus.CAPTURED, method=method, settlement_id=None, created_at=txn_time_str))
+                    payments.append(Payment(payment_id=payment_id, order_id=order_id, amount=amount, fee=fee, tax=tax, net_amount=net, status=PaymentStatus.CAPTURED, method=method, settlement_id=None, account_number=self.primary_merchant_account, created_at=txn_time_str))
 
                     ground_truth[payment_id] = GroundTruthMetadata(
                         is_anomaly=True,
@@ -286,7 +271,7 @@ class SyntheticFinancialGenerator:
                         explanation="Payment captured but not yet remitted by bank/gateway."
                     )
 
-        # Consolidate settlement batches into Bank Settlement objects with realistic UTRs
+        # Consolidate settlement batches
         for s_id, items in settlement_batches.items():
             tot_gross = sum(item[0] for item in items)
             tot_fee = sum(item[1] for item in items)
@@ -304,7 +289,7 @@ class SyntheticFinancialGenerator:
                 total_tax=round(tot_tax, 2),
                 net_payout=tot_net,
                 settlement_date=settlement_date,
-                account_number=f"XXXX-XXXX-{random.randint(1000, 9999)}",
+                account_number=settlement_accounts.get(s_id, self.primary_merchant_account),
                 status=SettlementStatus.SETTLED
             ))
 
