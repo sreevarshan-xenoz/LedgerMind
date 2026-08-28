@@ -8,8 +8,10 @@ env/
 venv/
 .venv/
 
-# Environment Variables
+# Environment Variables & Credentials
 .env
+*.csv
+.freebuff/
 
 # Pytest
 .pytest_cache/
