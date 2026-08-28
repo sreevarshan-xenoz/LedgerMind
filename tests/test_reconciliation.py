@@ -73,3 +73,70 @@ def test_benchmark_accuracy():
     assert eval_data["accuracy_pct"] >= 98.0
     assert eval_data["throughput_records_per_sec"] > 500.0
     assert eval_data["f1_score"] >= 0.95
+
+
+def test_intelligence_engine_all_scenarios():
+    from backend.agent.intelligence_engine import LedgerMindIntelligenceEngine
+    from backend.core.models import AskLedgerMindRequest
+
+    gen = SyntheticFinancialGenerator(seed=42)
+    batch = gen.generate_batch(batch_id="test_intel", num_records=100, anomaly_rate=0.10)
+    engine = LedgerMindIntelligenceEngine(batch)
+
+    # 1. Operational diagnosis
+    r1 = engine.ask(AskLedgerMindRequest(query="Give me a complete operational diagnosis"))
+    assert r1.intent == "OPERATIONAL_DIAGNOSIS"
+    assert "₹" in r1.direct_answer
+    assert r1.visualization is not None
+    assert r1.visualization["type"] == "waterfall"
+    assert len(r1.evidence_citations) > 0
+
+    # 2. Prioritization
+    r2 = engine.ask(AskLedgerMindRequest(query="What needs attention right now?"))
+    assert r2.intent == "PRIORITIZATION"
+    assert r2.visualization["type"] == "pareto"
+    assert len(r2.key_metrics) > 0
+
+    # 3. Settlement trend
+    r3 = engine.ask(AskLedgerMindRequest(query="Why did today's settlements fall?"))
+    assert r3.intent == "SETTLEMENT_TREND"
+    assert r3.visualization["type"] == "waterfall"
+
+    # 4. Explain screen
+    r4 = engine.ask(AskLedgerMindRequest(query="Explain this screen", screen_context="investigations"))
+    assert r4.intent == "SCREEN_EXPLANATION"
+    assert "Investigation Workspace" in r4.direct_answer
+
+    # 5. Case investigation & lifecycle
+    r5 = engine.ask(AskLedgerMindRequest(query="Show payment lifecycle for PAY_DEMO_7291", case_id="PAY_DEMO_7291"))
+    assert r5.intent == "CASE_INVESTIGATION"
+    assert r5.visualization["type"] == "lineage_graph"
+
+    # 6. What evidence is missing
+    r6 = engine.ask(AskLedgerMindRequest(query="What evidence is missing for PAY_DEMO_7291?"))
+    assert r6.intent == "CASE_INVESTIGATION"
+
+    # 7. Exposure query
+    r7 = engine.ask(AskLedgerMindRequest(query="How much money is currently at risk?"))
+    assert r7.intent == "EXPOSURE_RISK"
+
+    # 8. Follow-up pronoun resolution
+    r8 = engine.ask(AskLedgerMindRequest(
+        query="Which batch caused most of that?",
+        history=[{"conversation_context": {"active_focus_batch": "SETL_DEMO_8812", "active_focus_payment": "PAY_DEMO_7291"}}]
+    ))
+    assert r8.intent == "FOLLOWUP"
+    assert "SETL_DEMO_8812" in r8.direct_answer
+
+    # 9. Follow-up show those payments
+    r9 = engine.ask(AskLedgerMindRequest(
+        query="Show those payments",
+        history=[{"conversation_context": {"active_focus_batch": "SETL_DEMO_8812", "active_focus_payment": "PAY_DEMO_7291"}}]
+    ))
+    assert r9.intent == "FOLLOWUP"
+    assert len(r9.evidence_citations) > 0
+
+    # 10. Depth variants verification
+    assert "executive" in r1.depth_variants
+    assert "analyst" in r1.depth_variants
+    assert "technical" in r1.depth_variants

@@ -265,6 +265,7 @@ class InvestigationContext(BaseModel):
     settlement_id: Optional[str] = None
     category: str
     severity: str  # "CRITICAL", "HIGH", "MEDIUM", "LOW"
+    lifecycle_stage: str = "HUMAN_REVIEW"  # "DETECTED", "INVESTIGATING", "RESOLVED", "HUMAN_REVIEW", "ESCALATED", "CLOSED"
     title: str
     subheading: str
     variance_summary: str
@@ -274,4 +275,29 @@ class InvestigationContext(BaseModel):
     evidence_checklist: List[EvidenceChecklistItem]
     agent_trace: Dict[str, Any]
     decision: Dict[str, Any]
+    timeline: List[Dict[str, Any]] = Field(default_factory=list)
+
+
+class AskLedgerMindRequest(BaseModel):
+    query: str
+    screen_context: str = "investigations"  # investigations, overview, settlements, exceptions, benchmarks, audit-log
+    case_id: Optional[str] = None
+    settlement_id: Optional[str] = None
+    depth: str = "analyst"  # executive, analyst, technical
+    history: List[Dict[str, Any]] = Field(default_factory=list)
+
+
+class AskLedgerMindResponse(BaseModel):
+    query: str
+    intent: str
+    depth: str
+    direct_answer: str
+    key_metrics: List[Dict[str, Any]] = Field(default_factory=list)
+    visualization: Optional[Dict[str, Any]] = None
+    explanation: str
+    depth_variants: Dict[str, str] = Field(default_factory=dict)
+    evidence_citations: List[Dict[str, Any]] = Field(default_factory=list)
+    evidence_summary: Dict[str, Any] = Field(default_factory=dict)
+    recommended_actions: List[Dict[str, Any]] = Field(default_factory=list)
+    conversation_context: Dict[str, Any] = Field(default_factory=dict)
 

@@ -14,7 +14,8 @@ from ..core.models import (
     SettlementQAQuery, SettlementQAResponse,
     ExceptionItem, Payment, Order, Settlement, Refund,
     OrderStatus, PaymentStatus, SettlementStatus, ExceptionCategory,
-    InvestigationContext, FinancialLineageNode, FinancialStatement, EvidenceChecklistItem
+    InvestigationContext, FinancialLineageNode, FinancialStatement, EvidenceChecklistItem,
+    AskLedgerMindRequest, AskLedgerMindResponse
 )
 from ..core.synthetic_generator import SyntheticFinancialGenerator
 from ..core.adversarial_generator import AdversarialFinancialGenerator
@@ -24,6 +25,7 @@ from ..core.holdout_evaluator import HoldoutEvaluator
 from ..core.benchmarking import BenchmarkEvaluator
 from ..core.live_store import LiveReconciliationStore
 from ..agent.settlement_qa import SettlementQAAgent
+from ..agent.intelligence_engine import LedgerMindIntelligenceEngine
 from ..agent.evidence_graph import EvidenceGraphInvestigator
 from ..agent.decision_layer import AgentDecisionLayer
 from ..agent.orchestrator import AgenticInvestigationOrchestrator, InvestigationActionTrace
@@ -103,9 +105,14 @@ class SimulateWebhookRequest(BaseModel):
 
 @app.get("/")
 def serve_index():
-    index_path = os.path.join(static_dir, "index.html")
-    if os.path.exists(index_path):
-        return FileResponse(index_path)
+    candidate_paths = [
+        os.path.join(static_dir, "index.html"),
+        os.path.join(os.path.dirname(__file__), "static", "index.html"),
+        os.path.join(os.getcwd(), "backend", "api", "static", "index.html")
+    ]
+    for p in candidate_paths:
+        if os.path.exists(p):
+            return FileResponse(p, media_type="text/html")
     return {
         "system": "LedgerMind",
         "track": "Razorpay Buildathon Track 04",
@@ -595,6 +602,85 @@ def build_investigation_context(target_id: str) -> InvestigationContext:
         "explanation": var_expl
     }
 
+    # Build rich chronological event timeline
+    timeline = []
+    if ord_obj:
+        timeline.append({
+            "timestamp": ord_obj.created_at or "2026-08-27T10:00:00",
+            "event": "ERP Order Placed",
+            "entity": ord_obj.order_id,
+            "detail": f"Cart total ₹{ord_obj.amount:,.2f} recorded in merchant store (Customer: {ord_obj.customer_id}).",
+            "status": "VERIFIED"
+        })
+    if pay:
+        timeline.append({
+            "timestamp": pay.created_at or "2026-08-27T10:00:05",
+            "event": "Gateway Payment Captured",
+            "entity": pay.payment_id,
+            "detail": f"Authorized gross ₹{pay.amount:,.2f} via {pay.method}. Fee: ₹{pay.fee:,.2f}, GST: ₹{pay.tax:,.2f}.",
+            "status": "VERIFIED"
+        })
+    if setl:
+        timeline.append({
+            "timestamp": setl.settlement_date or "2026-08-28T10:00:00",
+            "event": "Bank Remittance Credited",
+            "entity": f"UTR {setl.utr}",
+            "detail": f"Bank statement feed credited ₹{setl.net_payout:,.2f} to account {setl.account_number}.",
+            "status": "VERIFIED" if setl.status == SettlementStatus.SETTLED else "PENDING"
+        })
+    for r in refunds:
+        timeline.append({
+            "timestamp": r.created_at,
+            "event": "Refund Debit Registered",
+            "entity": r.refund_id,
+            "detail": f"Refund of ₹{r.amount:,.2f} registered ({r.reason}).",
+            "status": "VERIFIED"
+        })
+    
+    timeline.append({
+        "timestamp": "2026-08-28T10:00:02",
+        "event": "3-Way Deterministic Reconciler",
+        "entity": "ENGINE_CORE",
+        "detail": f"Reconciliation ran: Expected net ₹{expected_net:,.2f} vs Actual net ₹{actual_net:,.2f}.",
+        "status": "EVALUATED"
+    })
+    
+    if abs(residual_var) > 0.05:
+        timeline.append({
+            "timestamp": "2026-08-28T10:00:03",
+            "event": "Variance Flagged",
+            "entity": "RECON_DISCREPANCY",
+            "detail": f"Unexplained residual variance of ₹{abs(residual_var):,.2f} flagged for investigation.",
+            "status": "FLAGGED"
+        })
+
+    timeline.append({
+        "timestamp": "2026-08-28T10:00:05",
+        "event": "Agent Investigation Complete",
+        "entity": "AGENT_DECISION",
+        "detail": f"Completed 6-point verification. Decision: {trace.final_decision} ({round(trace.confidence*100)}% confidence).",
+        "status": "RESOLVED" if trace.final_decision == "RESOLVE" else "ESCALATED"
+    })
+
+    # Severity and lifecycle calculation
+    if matched_exc.category in [ExceptionCategory.DUPLICATE_AUTH_CAPTURE, ExceptionCategory.ACCOUNT_MISMATCH] or abs(residual_var) >= 5000:
+        severity = "CRITICAL"
+    elif abs(residual_var) >= 500:
+        severity = "HIGH"
+    elif trace.final_decision == "RESOLVE":
+        severity = "LOW"
+    else:
+        severity = "REVIEW"
+
+    # Check if this item is in the human queue and if it has been acted upon
+    is_in_queue = matched_exc.exception_id in live_store.human_review_queue or target_pid in live_store.human_review_queue
+    if trace.final_decision == "RESOLVE":
+        lifecycle_stage = "RESOLVED"
+    elif is_in_queue:
+        lifecycle_stage = "HUMAN_REVIEW"
+    else:
+        lifecycle_stage = "DETECTED"
+
     return InvestigationContext(
         exception_id=matched_exc.exception_id,
         target_record=target_pid,
@@ -602,7 +688,8 @@ def build_investigation_context(target_id: str) -> InvestigationContext:
         order_id=ord_obj.order_id if ord_obj else matched_exc.order_id,
         settlement_id=setl.settlement_id if setl else matched_exc.settlement_id,
         category=matched_exc.category.value,
-        severity="HIGH" if trace.final_decision == "ESCALATE" else "LOW",
+        severity=severity,
+        lifecycle_stage=lifecycle_stage,
         title=title,
         subheading=f"{matched_exc.category.value.replace('_', ' ')} · {target_pid}",
         variance_summary=var_summary,
@@ -621,7 +708,8 @@ def build_investigation_context(target_id: str) -> InvestigationContext:
         lineage=lineage,
         evidence_checklist=checklist,
         agent_trace=trace.model_dump(),
-        decision=decision_info
+        decision=decision_info,
+        timeline=timeline
     )
 
 
@@ -650,6 +738,19 @@ def settlement_qa_endpoint(query: SettlementQAQuery):
     )
     qa_agent = SettlementQAAgent(active_batch)
     return qa_agent.answer_query(query)
+
+
+@app.post("/api/intelligence/ask", response_model=AskLedgerMindResponse)
+def ask_ledgermind_endpoint(request: AskLedgerMindRequest):
+    active_batch = SyntheticBatch(
+        batch_id="live_intel_batch",
+        orders=list(live_store.orders.values()),
+        payments=list(live_store.payments.values()),
+        settlements=list(live_store.settlements.values()),
+        refunds=list(live_store.refunds.values())
+    )
+    intel_engine = LedgerMindIntelligenceEngine(active_batch)
+    return intel_engine.ask(request)
 
 
 @app.get("/api/demo/live-incident-steps")
