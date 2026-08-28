@@ -1,0 +1,28 @@
+{
+  "version": "v0.3",
+  "name": "LedgerMind Control Group Baseline",
+  "timestamp": "2026-08-27T08:50:00Z",
+  "architecture": {
+    "engine": "Deterministic 3-Way Relational Matcher",
+    "agent": "Evidence Graph AI Investigator",
+    "integrations": "Razorpay Test Mode Client + HMAC-SHA256 Webhook Handler"
+  },
+  "control_group_benchmarks": {
+    "50_records": {
+      "accuracy_pct": 100.0,
+      "false_reconciliations": 0,
+      "throughput_rec_per_sec": 78540.2,
+      "latency_ms": 0.64
+    },
+    "500_records_adversarial": {
+      "records_processed": 500,
+      "true_reconciliations": 455,
+      "false_reconciliations": 0,
+      "exceptions_detected": 245,
+      "ai_resolution_rate_pct": 32.7,
+      "honest_unresolved_count": 165,
+      "throughput_rec_per_sec": 98383.1,
+      "latency_ms": 5.08
+    }
+  }
+}

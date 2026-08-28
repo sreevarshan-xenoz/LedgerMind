@@ -1,0 +1,102 @@
+[
+  {
+    "seed": 123,
+    "type": "holdout_10k",
+    "tp": 8505,
+    "tn": 1495,
+    "fp": 0,
+    "false_res": 0,
+    "throughput": 55121.05,
+    "status": "PASSED (0 FP / 0 FR)"
+  },
+  {
+    "seed": 456,
+    "type": "holdout_10k",
+    "tp": 8492,
+    "tn": 1508,
+    "fp": 0,
+    "false_res": 0,
+    "throughput": 91789.27,
+    "status": "PASSED (0 FP / 0 FR)"
+  },
+  {
+    "seed": 789,
+    "type": "holdout_10k",
+    "tp": 8554,
+    "tn": 1446,
+    "fp": 0,
+    "false_res": 0,
+    "throughput": 92000.81,
+    "status": "PASSED (0 FP / 0 FR)"
+  },
+  {
+    "seed": 1337,
+    "type": "holdout_10k",
+    "tp": 8504,
+    "tn": 1496,
+    "fp": 0,
+    "false_res": 0,
+    "throughput": 61548.27,
+    "status": "PASSED (0 FP / 0 FR)"
+  },
+  {
+    "seed": 2026,
+    "type": "holdout_10k",
+    "tp": 8505,
+    "tn": 1495,
+    "fp": 0,
+    "false_res": 0,
+    "throughput": 57324.95,
+    "status": "PASSED (0 FP / 0 FR)"
+  },
+  {
+    "seed": 123,
+    "type": "chaos_2k",
+    "tp": 855,
+    "tn": 1145,
+    "fp": 0,
+    "false_res": 0,
+    "escalated": 1145,
+    "status": "PASSED (0 FP / 0 FR)"
+  },
+  {
+    "seed": 456,
+    "type": "chaos_2k",
+    "tp": 863,
+    "tn": 1137,
+    "fp": 0,
+    "false_res": 0,
+    "escalated": 1137,
+    "status": "PASSED (0 FP / 0 FR)"
+  },
+  {
+    "seed": 789,
+    "type": "chaos_2k",
+    "tp": 859,
+    "tn": 1141,
+    "fp": 0,
+    "false_res": 0,
+    "escalated": 1141,
+    "status": "PASSED (0 FP / 0 FR)"
+  },
+  {
+    "seed": 1337,
+    "type": "chaos_2k",
+    "tp": 874,
+    "tn": 1126,
+    "fp": 0,
+    "false_res": 0,
+    "escalated": 1126,
+    "status": "PASSED (0 FP / 0 FR)"
+  },
+  {
+    "seed": 2026,
+    "type": "chaos_2k",
+    "tp": 880,
+    "tn": 1120,
+    "fp": 0,
+    "false_res": 0,
+    "escalated": 1120,
+    "status": "PASSED (0 FP / 0 FR)"
+  }
+]

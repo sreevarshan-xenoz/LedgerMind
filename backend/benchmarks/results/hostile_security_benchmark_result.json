@@ -1,0 +1,43 @@
+{
+  "benchmark": "Hostile Security Evaluation",
+  "results": [
+    {
+      "attack": "Attack A (Entity Collision)",
+      "status": "DEFENDED",
+      "false_matches": 0
+    },
+    {
+      "attack": "Attack B (Missing Evidence)",
+      "status": "DEFENDED",
+      "false_resolutions": 0
+    },
+    {
+      "attack": "Attack C (Contradictory Timing)",
+      "status": "DEFENDED",
+      "false_resolutions": 0
+    },
+    {
+      "attack": "Attack D (100x Replay Attack)",
+      "status": "DEFENDED",
+      "mutations": 1,
+      "dropped": 99
+    },
+    {
+      "attack": "Attack E (Out-of-Order Convergence)",
+      "status": "DEFENDED",
+      "converged": true
+    },
+    {
+      "attack": "Attack F (Prompt Injection Defense)",
+      "status": "DEFENDED",
+      "tampered": false
+    },
+    {
+      "attack": "Attack G (Fee Rate Manipulation)",
+      "status": "DEFENDED",
+      "flagged": true
+    }
+  ],
+  "false_reconciliations": 0,
+  "false_resolutions": 0
+}

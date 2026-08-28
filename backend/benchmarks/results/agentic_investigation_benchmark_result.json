@@ -1,0 +1,232 @@
+{
+  "total_investigations": 182,
+  "tool_selection_accuracy_pct": 100.0,
+  "false_resolutions": 0,
+  "avg_steps_per_inv": 6.0,
+  "sample_traces": [
+    {
+      "investigation_id": "INV_pay_h_anom_000301_1787823342",
+      "target_record": "pay_h_anom_000301",
+      "steps": [
+        {
+          "step_number": 1,
+          "action": "inspect_payment",
+          "input_arguments": {
+            "payment_id": "pay_h_anom_000301"
+          },
+          "observation": "Payment pay_h_anom_000301 captured: Gross \u20b91,500.00, Fee \u20b930.00, Tax \u20b95.40, Method card, SettlementRef setl_h_anom_000301.",
+          "thought_summary": "Initial inspection: retrieve gross authorization, charged fees, and order reference."
+        },
+        {
+          "step_number": 2,
+          "action": "inspect_settlement",
+          "input_arguments": {
+            "settlement_id": "setl_h_anom_000301"
+          },
+          "observation": "Settlement setl_h_anom_000301 remitted: Bank UTR HDFC_UTR_HA_000301, Net Payout \u20b91,464.60, Account XXXX-XXXX-8833 on 2026-08-02T19:02:00+00:00.",
+          "thought_summary": "Inspect bank settlement statement and remittance UTR for net payout."
+        },
+        {
+          "step_number": 3,
+          "action": "inspect_refunds",
+          "input_arguments": {
+            "payment_id": "pay_h_anom_000301"
+          },
+          "observation": "Found 0 refund record(s) totaling \u20b90.00.",
+          "thought_summary": "Check for active pre-settlement or post-settlement refund debits."
+        },
+        {
+          "step_number": 4,
+          "action": "inspect_refunds",
+          "input_arguments": {
+            "payment_id": "pay_h_anom_000301"
+          },
+          "observation": "Found 0 refund record(s) totaling \u20b90.00.",
+          "thought_summary": "Check for active pre-settlement or post-settlement refund debits."
+        },
+        {
+          "step_number": 5,
+          "action": "inspect_refunds",
+          "input_arguments": {
+            "payment_id": "pay_h_anom_000301"
+          },
+          "observation": "Found 0 refund record(s) totaling \u20b90.00.",
+          "thought_summary": "Check for active pre-settlement or post-settlement refund debits."
+        },
+        {
+          "step_number": 6,
+          "action": "inspect_refunds",
+          "input_arguments": {
+            "payment_id": "pay_h_anom_000301"
+          },
+          "observation": "Found 0 refund record(s) totaling \u20b90.00.",
+          "thought_summary": "Check for active pre-settlement or post-settlement refund debits."
+        }
+      ],
+      "final_decision": "ESCALATE",
+      "root_cause": "ACCOUNT_MISMATCH",
+      "confidence": 0.99,
+      "evidence_citations": [
+        "payment:pay_h_anom_000301",
+        "settlement:setl_h_anom_000301"
+      ],
+      "math_proof": {
+        "gross": 1500.0,
+        "foreign_account": "XXXX-XXXX-8833"
+      },
+      "recommended_action": "ESCALATE_BANKING_OPS_FREEZE_PAYOUT",
+      "requires_human": true,
+      "iterations_used": 6,
+      "terminated_reason": "FOREIGN_ACCOUNT_DETECTED"
+    },
+    {
+      "investigation_id": "INV_pay_h_anom_000302_1787823342",
+      "target_record": "pay_h_anom_000302",
+      "steps": [
+        {
+          "step_number": 1,
+          "action": "inspect_payment",
+          "input_arguments": {
+            "payment_id": "pay_h_anom_000302"
+          },
+          "observation": "Payment pay_h_anom_000302 captured: Gross \u20b950,000.00, Fee \u20b91,000.00, Tax \u20b9180.00, Method card, SettlementRef setl_h_anom_000302.",
+          "thought_summary": "Initial inspection: retrieve gross authorization, charged fees, and order reference."
+        },
+        {
+          "step_number": 2,
+          "action": "inspect_settlement",
+          "input_arguments": {
+            "settlement_id": "setl_h_anom_000302"
+          },
+          "observation": "Settlement setl_h_anom_000302 remitted: Bank UTR HDFC_UTR_HA_000302, Net Payout \u20b948,820.00, Account XXXX-XXXX-8833 on 2026-08-02T19:04:00+00:00.",
+          "thought_summary": "Inspect bank settlement statement and remittance UTR for net payout."
+        },
+        {
+          "step_number": 3,
+          "action": "inspect_refunds",
+          "input_arguments": {
+            "payment_id": "pay_h_anom_000302"
+          },
+          "observation": "Found 0 refund record(s) totaling \u20b90.00.",
+          "thought_summary": "Check for active pre-settlement or post-settlement refund debits."
+        },
+        {
+          "step_number": 4,
+          "action": "inspect_refunds",
+          "input_arguments": {
+            "payment_id": "pay_h_anom_000302"
+          },
+          "observation": "Found 0 refund record(s) totaling \u20b90.00.",
+          "thought_summary": "Check for active pre-settlement or post-settlement refund debits."
+        },
+        {
+          "step_number": 5,
+          "action": "inspect_refunds",
+          "input_arguments": {
+            "payment_id": "pay_h_anom_000302"
+          },
+          "observation": "Found 0 refund record(s) totaling \u20b90.00.",
+          "thought_summary": "Check for active pre-settlement or post-settlement refund debits."
+        },
+        {
+          "step_number": 6,
+          "action": "inspect_refunds",
+          "input_arguments": {
+            "payment_id": "pay_h_anom_000302"
+          },
+          "observation": "Found 0 refund record(s) totaling \u20b90.00.",
+          "thought_summary": "Check for active pre-settlement or post-settlement refund debits."
+        }
+      ],
+      "final_decision": "ESCALATE",
+      "root_cause": "ACCOUNT_MISMATCH",
+      "confidence": 0.99,
+      "evidence_citations": [
+        "payment:pay_h_anom_000302",
+        "settlement:setl_h_anom_000302"
+      ],
+      "math_proof": {
+        "gross": 50000.0,
+        "foreign_account": "XXXX-XXXX-8833"
+      },
+      "recommended_action": "ESCALATE_BANKING_OPS_FREEZE_PAYOUT",
+      "requires_human": true,
+      "iterations_used": 6,
+      "terminated_reason": "FOREIGN_ACCOUNT_DETECTED"
+    },
+    {
+      "investigation_id": "INV_pay_h_anom_dup_000303_1787823342",
+      "target_record": "pay_h_anom_dup_000303",
+      "steps": [
+        {
+          "step_number": 1,
+          "action": "inspect_payment",
+          "input_arguments": {
+            "payment_id": "pay_h_anom_dup_000303"
+          },
+          "observation": "Payment pay_h_anom_dup_000303 captured: Gross \u20b97,500.00, Fee \u20b9150.00, Tax \u20b927.00, Method card, SettlementRef None.",
+          "thought_summary": "Initial inspection: retrieve gross authorization, charged fees, and order reference."
+        },
+        {
+          "step_number": 2,
+          "action": "inspect_refunds",
+          "input_arguments": {
+            "payment_id": "pay_h_anom_dup_000303"
+          },
+          "observation": "Found 0 refund record(s) totaling \u20b90.00.",
+          "thought_summary": "No settlement reference attached. Check if transaction was refunded pre-settlement."
+        },
+        {
+          "step_number": 3,
+          "action": "inspect_refunds",
+          "input_arguments": {
+            "payment_id": "pay_h_anom_dup_000303"
+          },
+          "observation": "Found 0 refund record(s) totaling \u20b90.00.",
+          "thought_summary": "No settlement reference attached. Check if transaction was refunded pre-settlement."
+        },
+        {
+          "step_number": 4,
+          "action": "inspect_refunds",
+          "input_arguments": {
+            "payment_id": "pay_h_anom_dup_000303"
+          },
+          "observation": "Found 0 refund record(s) totaling \u20b90.00.",
+          "thought_summary": "No settlement reference attached. Check if transaction was refunded pre-settlement."
+        },
+        {
+          "step_number": 5,
+          "action": "inspect_refunds",
+          "input_arguments": {
+            "payment_id": "pay_h_anom_dup_000303"
+          },
+          "observation": "Found 0 refund record(s) totaling \u20b90.00.",
+          "thought_summary": "No settlement reference attached. Check if transaction was refunded pre-settlement."
+        },
+        {
+          "step_number": 6,
+          "action": "inspect_refunds",
+          "input_arguments": {
+            "payment_id": "pay_h_anom_dup_000303"
+          },
+          "observation": "Found 0 refund record(s) totaling \u20b90.00.",
+          "thought_summary": "No settlement reference attached. Check if transaction was refunded pre-settlement."
+        }
+      ],
+      "final_decision": "ESCALATE",
+      "root_cause": "DUPLICATE_AUTH_CAPTURE",
+      "confidence": 0.98,
+      "evidence_citations": [
+        "payment:pay_h_anom_dup_000303"
+      ],
+      "math_proof": {
+        "gross": 7500.0,
+        "formula": "Secondary duplicate authorization for cart."
+      },
+      "recommended_action": "INITIATE_CUSTOMER_REFUND",
+      "requires_human": true,
+      "iterations_used": 6,
+      "terminated_reason": "DUPLICATE_CAPTURE_TRAPPED"
+    }
+  ]
+}

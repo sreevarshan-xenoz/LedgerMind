@@ -1,0 +1,52 @@
+{
+  "records_processed": 2000,
+  "confusion_matrix": {
+    "TP_true_matches": 893,
+    "FP_false_matches": 0,
+    "FN_false_exceptions": 0,
+    "TN_true_exceptions": 1107
+  },
+  "reconciliation": {
+    "clean_matches": 893,
+    "false_reconciliations": 0,
+    "accuracy_pct": 100.0,
+    "precision_pct": 100.0,
+    "recall_pct": 100.0,
+    "f1_score": 100.0
+  },
+  "agent": {
+    "auto_resolved_count": 281,
+    "false_resolutions_count": 0,
+    "resolution_precision_pct": 100.0,
+    "escalated_count": 1107,
+    "false_escalations_count": 0,
+    "escalation_precision_pct": 100.0,
+    "false_resolution_rate_pct": 0.0
+  },
+  "confidence_calibration": {
+    "90-100%": {
+      "total_predictions": 1388,
+      "correct_predictions": 1388,
+      "empirical_accuracy_pct": 100.0
+    },
+    "80-90%": {
+      "total_predictions": 0,
+      "correct_predictions": 0,
+      "empirical_accuracy_pct": 100.0
+    },
+    "70-80%": {
+      "total_predictions": 0,
+      "correct_predictions": 0,
+      "empirical_accuracy_pct": 100.0
+    },
+    "<70%": {
+      "total_predictions": 0,
+      "correct_predictions": 0,
+      "empirical_accuracy_pct": 100.0
+    }
+  },
+  "performance": {
+    "elapsed_ms": 18.77,
+    "throughput_records_per_sec": 106567.2
+  }
+}
