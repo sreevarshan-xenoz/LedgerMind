@@ -365,7 +365,7 @@ class LedgerMindIntelligenceEngine:
         actions = [
             {"label": "🚀 Start Top Priority (Batch SETL_8812)", "action_type": "NAVIGATE_INVESTIGATION", "target_id": "PAY_DEMO_7291", "primary": True},
             {"label": "🔍 Filter High-Impact Exceptions", "action_type": "FILTER_QUEUE", "target_id": "HIGH", "primary": False},
-            {"label": "📄 Export SOC-2 Audit Report", "action_type": "EXPORT_AUDIT", "target_id": "LATEST", "primary": False}
+            {"label": "📄 Export Auditable Operator Log", "action_type": "EXPORT_AUDIT", "target_id": "LATEST", "primary": False}
         ]
 
         return AskLedgerMindResponse(
@@ -664,9 +664,9 @@ class LedgerMindIntelligenceEngine:
                 "direct": "You are in the Verification Proof Room, testing the zero false financial resolutions invariant.",
                 "explanation": (
                     "### What you are looking at:\n"
-                    "• **Invariant Guarantee:** 0 False Resolutions across 10,000 holdout transactions and 2,000 chaos corruptions.\n"
+                    "• **Observed Reliability:** 0 False Resolutions across 10,000 holdout transactions and 2,000 chaos corruptions.\n"
                     "• **Multi-Tier Results:** Benchmarks throughput (59,420 rec/sec) and precision across 4 stress tiers.\n"
-                    "• **Interactive Proof:** Click `Run Evaluation Proof ⚡` to execute live holdout verification."
+                    "• **Interactive Proof:** Click `Run Live 10k Evaluation` to execute holdout verification."
                 )
             },
             "overview": {
@@ -678,7 +678,7 @@ class LedgerMindIntelligenceEngine:
                 )
             },
             "settlements": {
-                "direct": "You are viewing Bank Settlement Batches ingested from HDFC statement feeds.",
+                "direct": "You are viewing Bank Settlement Batches ingested from synthetic statement feeds.",
                 "explanation": "Displays gross authorized collections, fee schedules, statutory GST deductions, and net payouts remitted to merchant accounts."
             },
             "exceptions": {
@@ -686,7 +686,7 @@ class LedgerMindIntelligenceEngine:
                 "explanation": "Lists all unresolvable discrepancies with AI reasoning proof, category classification, and direct investigation jump buttons."
             },
             "audit-log": {
-                "direct": "You are viewing the Immutable SOC-2 Compliant Operator Audit Trail.",
+                "direct": "You are viewing the Tamper-Evident Auditable Operator Log.",
                 "explanation": "Logs all escalation decisions, manual overrides, reviewer audit notes, and cryptographic timestamps."
             }
         }

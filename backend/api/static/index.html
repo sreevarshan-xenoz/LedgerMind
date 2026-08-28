@@ -1572,13 +1572,18 @@
                 </div>
 
                 <!-- AGENTIC TOOL EXECUTION LOG -->
-                <div style="background:#06090E; border:1px solid var(--border); border-radius:var(--radius); padding:8px 10px; font-family:'JetBrains Mono', monospace; font-size:10px; color:#A0AEC0;">
-                  <div style="color:var(--agent); font-weight:700; margin-bottom:4px;">⚡ AGENT TOOL EXECUTION TRACE</div>
-                  <div>[00:01] inspect_payment("PAY_DEMO_7291") -> Verified Captured ₹15,000.00</div>
-                  <div>[00:02] inspect_settlement("SETL_DEMO_8812") -> Bank payout ₹13,780.00</div>
-                  <div>[00:03] inspect_refunds("ORD_DEMO_2911") -> 0 records found</div>
-                  <div>[00:04] inspect_bank_memo("UTR_HDFC_9918") -> ✕ NO DEBIT MEMO FOUND</div>
-                  <div style="color:var(--critical); font-weight:700;">[00:05] DECISION: Safe Degradation -> Block Auto-Resolution</div>
+                <div style="background:#06090E; border:1px solid var(--border); border-radius:var(--radius); padding:10px 12px; font-family:'JetBrains Mono', monospace; font-size:10px; color:#A0AEC0; display:flex; flex-direction:column; gap:5px;">
+                  <div style="color:var(--agent); font-weight:700; margin-bottom:2px; display:flex; justify-content:space-between;">
+                    <span>⚡ AGENT TOOL EXECUTION TRACE</span>
+                    <span style="color:var(--success); font-size:9.5px;">✓ 0 HALLUCINATIONS</span>
+                  </div>
+                  <div><span style="color:var(--brand)">01 inspect_payment("PAY_DEMO_7291")</span><br/><span style="color:var(--success)">   ✓ ₹15,000.00 captured in Razorpay Sandbox</span></div>
+                  <div><span style="color:var(--brand)">02 inspect_settlement("SETL_DEMO_8812")</span><br/><span style="color:var(--success)">   ✓ ₹13,780.00 received via UTR_HDFC_9918</span></div>
+                  <div><span style="color:var(--brand)">03 check_refunds("ORD_DEMO_2911")</span><br/><span style="color:var(--success)">   ✓ 0 customer refunds found</span></div>
+                  <div><span style="color:var(--brand)">04 calculate_expected_net()</span><br/><span style="color:var(--success)">   ✓ Gross ₹15,000 − MDR ₹300 − GST ₹54 = Expected ₹14,646.00</span></div>
+                  <div><span style="color:var(--brand)">05 inspect_bank_memo("UTR_HDFC_9918")</span><br/><span style="color:var(--critical)">   ✕ No bank debit memo / fee schedule adjustment found</span></div>
+                  <div><span style="color:var(--brand)">06 compare_variance()</span><br/><span style="color:var(--warning)">   ⚠️ ₹866.00 unexplained shortfall</span></div>
+                  <div><span style="color:var(--brand)">07 enforce_safety_invariant()</span><br/><span style="color:var(--critical); font-weight:700;">   → Autonomous resolution BLOCKED (Evidence incomplete: 5/6)</span></div>
                 </div>
 
               </div>
@@ -1588,7 +1593,7 @@
             <div class="card">
               <div class="card-header">
                 <span>4. DECISION RECEIPT</span>
-                <span class="status-badge" style="background:rgba(224,82,82,0.15); border-color:var(--critical); color:var(--critical)">HUMAN REVIEW</span>
+                <span class="status-badge" id="decision-card-status-badge" style="background:rgba(224,82,82,0.15); border-color:var(--critical); color:var(--critical)">HUMAN REVIEW</span>
               </div>
               <div class="card-body">
                 
@@ -1614,7 +1619,7 @@
                 </div>
 
                 <div style="display:flex; flex-direction:column; gap:6px; margin-top:auto;">
-                  <button class="btn btn-critical" onclick="executeHumanAction('ESCALATE_BANK_OPS')">🛡️ Escalate to Banking Ops</button>
+                  <button class="btn btn-critical" id="btn-escalate-action" onclick="executeHumanAction('ESCALATE_BANK_OPS')">🛡️ Escalate to Banking Ops</button>
                   <button class="btn btn-secondary btn-sm" onclick="executeHumanAction('REQUEST_DEBIT_MEMO')">Request Bank Debit Memo</button>
                   <button class="btn btn-ghost btn-sm" onclick="openEvidenceDrawerForCurrent()">View Raw Evidence JSON →</button>
                 </div>
@@ -2328,7 +2333,31 @@
     }
 
     function executeHumanAction(actionType) {
-      alert(`Tamper-Evident Audit Logged: Action "${actionType}" executed on PAY_DEMO_7291 by merchant operator.`);
+      const btn = document.getElementById('btn-escalate-action');
+      const badge = document.getElementById('decision-card-status-badge');
+      if (btn) {
+        btn.className = 'btn btn-primary';
+        btn.innerHTML = '<span>✓ ESCALATED TO BANKING OPS</span>';
+      }
+      if (badge) {
+        badge.className = 'status-badge';
+        badge.style.background = 'rgba(53,201,139,0.15)';
+        badge.style.borderColor = 'var(--success)';
+        badge.style.color = 'var(--success)';
+        badge.innerText = '✓ ESCALATED';
+      }
+      const tbody = document.getElementById('audit-table-body');
+      if (tbody) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="mono">${new Date().toISOString().replace('T', ' ').slice(0, 19)}</td>
+          <td class="mono">PAY_DEMO_7291</td>
+          <td><span class="kpi-pill" style="color:var(--brand)">${actionType}</span></td>
+          <td>Operator approved escalation: Shortfall of ₹866.00 missing debit memo.</td>
+          <td><span class="kpi-pill" style="color:var(--success)">✓ VERIFIED AUDIT</span></td>
+        `;
+        tbody.insertBefore(tr, tbody.firstChild);
+      }
     }
 
     /* PROOF ROOM TEST RUNNER */
